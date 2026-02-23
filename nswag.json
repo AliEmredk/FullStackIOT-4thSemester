@@ -1,0 +1,29 @@
+{
+  "runtime": "Net100",
+  "defaultVariables": null,
+  "documentGenerator": {
+    "aspNetCoreToOpenApi": {
+      "project": "server/Api/Api.csproj",
+      "configuration": "Debug",
+      "noBuild": false,
+      "verbose": true,
+      "aspNetCoreEnvironment": "Development",
+      "output": "openapi.json"
+    }
+  },
+  "codeGenerators": {
+    "openApiToTypeScriptClient": {
+      "className": "ApiClient",
+      "template": "Fetch",
+      "typeScriptVersion": 5.0,
+      "promiseType": "Promise",
+      "httpClass": "HttpClient",
+      "useAbortSignal": true,
+      "generateClientClasses": true,
+      "generateClientInterfaces": false,
+      "generateOptionalParameters": true,
+      "exportTypes": true,
+      "output": "client/src/generated/api-client.ts"
+    }
+  }
+}

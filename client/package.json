@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+
+    "gen:api": "cd .. && dotnet tool restore && dotnet tool run nswag run nswag.json",
+    "gen:api:watch": "cd .. && dotnet tool restore && dotnet tool run nswag run nswag.json && cd client && vite",
+
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
