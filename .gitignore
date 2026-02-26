@@ -499,6 +499,10 @@ pnpm-debug.log*
 
 #Secrets
 .env
+.env*
 
 client/src/generated/
 openapi.json
+
+appsettings.Development.json
+appsettings.json
