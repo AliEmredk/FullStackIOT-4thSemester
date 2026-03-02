@@ -1,5 +1,7 @@
+using api.Services;
 using dataaccess;
 using Microsoft.EntityFrameworkCore;
+using Mqtt.Controllers;
 using StackExchange.Redis;
 using StateleSSE.AspNetCore;
 using StateleSSE.AspNetCore.Extensions;
@@ -8,7 +10,13 @@ DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHostedService<MqttConnectHostedService>();
+
+
+builder.Services.AddMqttControllers();
 builder.Services.AddControllers();
+
+builder.Services.AddScoped<IWindmillCommandService, WindmillCommandService>();
 
 // NSwag
 builder.Services.AddOpenApiDocument(cfg => cfg.Title = "FullstackIot API");
@@ -69,6 +77,22 @@ if (app.Environment.IsDevelopment())
         cfg.DocumentPath = "/swagger/v1/swagger.json";
     });
 }
+
+//FOR mqtt
+var mqtt = app.Services.GetRequiredService<IMqttClientService>();
+
+_ = Task.Run(async () =>
+{
+    try
+    {
+        await mqtt.ConnectAsync("broker.hivemq.com", 1883);
+        Console.WriteLine("✅ MQTT connected");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("❌ MQTT connection failed: " + ex.Message);
+    }
+});
 
 app.UseHttpsRedirection();
 app.MapControllers();
