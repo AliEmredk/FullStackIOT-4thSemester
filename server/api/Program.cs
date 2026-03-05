@@ -16,6 +16,7 @@ builder.Services.AddHostedService<MqttConnectHostedService>();
 builder.Services.AddMqttControllers();
 builder.Services.AddControllers();
 
+builder.Services.AddScoped<IWindmillTelemetryService, WindmillTelemetryService>();
 builder.Services.AddScoped<IWindmillCommandService, WindmillCommandService>();
 
 // NSwag
