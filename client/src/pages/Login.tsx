@@ -7,10 +7,26 @@ const Login = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState("");
+    
+    const handleLogin = async () => {
+        try {
+            await login(username, password);
+        } catch {
+            setError("Invalid username or password");
+        }
+    };
+    
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await handleLogin();
+    };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-900">
-            <div className="bg-slate-800 border border-slate-800 rounded-2xl p-10 w-96 shadow-xl">
+            <form 
+            onSubmit={handleSubmit}
+            className="bg-slate-800 border border-slate-800 rounded-2xl p-10 w-96 shadow-xl">
                 <h1 className="text-2xl font-bold mb-6 text-center text-blue-400">
                     Offshore Wind Farm Login
                 </h1>
@@ -41,12 +57,16 @@ const Login = () => {
                 </div>
 
                 <button
-                    onClick={() => login(username, password)}
+                    onClick={handleLogin}
+                    disabled={!username || !password}
                     className="w-full bg-blue-600 hover:bg-blue-500 transition rounded-lg py-3 font-semibold"
                 >
                     Sign In
                 </button>
-            </div>
+                {error && (
+                    <p className="text-red-400 text-sm mb-4 text-center">{error}</p>
+                )}
+            </form>
         </div>
     );
 };

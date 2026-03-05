@@ -1,6 +1,12 @@
+using System.Formats.Asn1;
+using System.Text;
 using api.Services;
 using dataaccess;
+using dataaccess.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Mqtt.Controllers;
 using StackExchange.Redis;
 using StateleSSE.AspNetCore;
@@ -15,6 +21,9 @@ builder.Services.AddHostedService<MqttConnectHostedService>();
 
 builder.Services.AddMqttControllers();
 builder.Services.AddControllers();
+builder.Services.AddCors();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddScoped<IWindmillCommandService, WindmillCommandService>();
 
@@ -48,6 +57,25 @@ builder.Services.AddDbContext<AppDbContext>((sp, opt) =>
     if (!builder.Environment.IsEnvironment("Migration"))
         opt.AddEfRealtimeInterceptor(sp);
 });
+
+
+var secret = builder.Configuration["Secret"];
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(secret))
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 var redisConnStr =
@@ -95,6 +123,9 @@ _ = Task.Run(async () =>
 });
 
 app.UseHttpsRedirection();
+app.UseCors(config => config.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().SetIsOriginAllowed(x => true));
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

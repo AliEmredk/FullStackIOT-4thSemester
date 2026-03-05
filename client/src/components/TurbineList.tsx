@@ -1,4 +1,4 @@
-const turbines = ["Alpha", "Beta", "Gamma"];
+const turbines = ["Alpha", "Beta", "Gamma", "Delta"];
 
 const TurbineList = () => {
     return (
