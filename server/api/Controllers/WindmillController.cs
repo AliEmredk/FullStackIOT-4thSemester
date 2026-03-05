@@ -1,11 +1,12 @@
 using Mqtt.Controllers;
 using System.Text.Json;
 using api.dtos;
+using api.Services;
 
 namespace api.Controllers;
 
 //Checkout what this ILogger is doing
-public class WindmillMqttController(ILogger<WindmillMqttController> logger) : MqttController
+public class WindmillMqttController(ILogger<WindmillMqttController> logger, TelemetryCache cache) : MqttController
 
 {
     [MqttRoute("farm/FullStackIOT-ELK/windmill/{turbineId}/telemetry")]
@@ -17,6 +18,9 @@ public class WindmillMqttController(ILogger<WindmillMqttController> logger) : Mq
                 turbineId, data.TurbineId);
             return Task.CompletedTask;
         }
+        
+        cache.Upsert(data);
+        
         logger.LogInformation("Telemetry topic turbineId={TurbineId} payload={Payload}",
             turbineId, JsonSerializer.Serialize(data));
 

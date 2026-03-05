@@ -49,6 +49,8 @@ builder.Services.AddDbContext<AppDbContext>((sp, opt) =>
         opt.AddEfRealtimeInterceptor(sp);
 });
 
+builder.Services.AddSingleton<TelemetryCache>();
+
 var app = builder.Build();
 var redisConnStr =
     Environment.GetEnvironmentVariable("REDIS_CONNECTION")
