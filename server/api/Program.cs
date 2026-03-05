@@ -25,6 +25,7 @@ builder.Services.AddCors();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtService>();
 
+builder.Services.AddScoped<IWindmillTelemetryService, WindmillTelemetryService>();
 builder.Services.AddScoped<IWindmillCommandService, WindmillCommandService>();
 
 // NSwag

@@ -30,15 +30,19 @@ public class WindmillCommandService(
         if (!commandJson.TryGetProperty("action", out var actionProp) || actionProp.ValueKind != JsonValueKind.String)
             throw new ArgumentException("Command must contain string property 'action'");
 
-        var action = actionProp.GetString()!.Trim();
+        var action = actionProp.GetString()?.Trim()
+                     ?? throw new ArgumentException("Command 'action' must be a string");
+
         if (string.IsNullOrWhiteSpace(action))
             throw new ArgumentException("Command 'action' must be a non-empty string");
         
-        //validate and normalize to a clean JSON payload string
+        action = action.ToLowerInvariant();
+        
         var (actionEnum, normalizePayload) = ValidateAndNormalize(action, commandJson);
         
         // FK required for turbinecommand
-        var turbine = await db.Turbines.SingleOrDefaultAsync(t => t.TurbineId == turbineId);
+        var turbine = await db.Turbines
+            .SingleOrDefaultAsync(t => t.FarmId == FarmId && t.TurbineId == turbineId);
         if (turbine is null)
         {
             var meta = KnownTurbines[turbineId];
@@ -93,13 +97,14 @@ public class WindmillCommandService(
     private static (TurbineCommandAction ActionEnum, string NormalizedJson) ValidateAndNormalize(string action,
         JsonElement json)
     {
+        
         //return normalized json for consistent format
         return action switch
         {
-            "setInterval" => (TurbineCommandAction.SetInterval, NormalizeSetInterval(json)),
+            "setinterval" => (TurbineCommandAction.SetInterval, NormalizeSetInterval(json)),
             "stop" => (TurbineCommandAction.Stop, NormalizeStop(json)),
             "start" => (TurbineCommandAction.Start, NormalizeStart()),
-            "setPitch" => (TurbineCommandAction.SetPitch, NormalizeSetPitch(json)),
+            "setpitch" => (TurbineCommandAction.SetPitch, NormalizeSetPitch(json)),
             _ => throw new ArgumentException($"Unsupported action '{action}'")
         };
     }
