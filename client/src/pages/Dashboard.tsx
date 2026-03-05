@@ -16,6 +16,7 @@ const Dashboard = () => {
 
                 <div className="flex items-center gap-4">
                     <span className="text-sm text-slate-400">{user?.username}</span>
+                    |
                     <button
                         onClick={logout}
                         className="text-sm text-slate-400 hover:text-red-300"
