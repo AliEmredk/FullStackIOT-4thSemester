@@ -2,14 +2,13 @@ using Mqtt.Controllers;
 using System.Text.Json;
 using api.dtos;
 using api.Services;
-using api.Services;
 
 namespace api.Controllers;
 
 //Checkout what this ILogger is doing
 public class WindmillMqttController(
     ILogger<WindmillMqttController> logger,
-    IWindmillTelemetryService telemetryService, TelemetryCache cache
+    IWindmillTelemetryService telemetryService
     ) : MqttController
 
 {
@@ -22,9 +21,6 @@ public class WindmillMqttController(
                 turbineId, data.TurbineId);
             return;
         }
-        
-        cache.Upsert(data);
-        
 
         logger.LogInformation("Telemetry topic turbineId={TurbineId} payload={Payload}",
             turbineId, JsonSerializer.Serialize(data));

@@ -59,8 +59,6 @@ builder.Services.AddDbContext<AppDbContext>((sp, opt) =>
         opt.AddEfRealtimeInterceptor(sp);
 });
 
-builder.Services.AddSingleton<TelemetryCache>();
-
 
 var secret = builder.Configuration["Secret"];
 
@@ -111,19 +109,6 @@ if (app.Environment.IsDevelopment())
 
 //FOR mqtt
 var mqtt = app.Services.GetRequiredService<IMqttClientService>();
-
-_ = Task.Run(async () =>
-{
-    try
-    {
-        await mqtt.ConnectAsync("broker.hivemq.com", 1883);
-        Console.WriteLine("✅ MQTT connected");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine("❌ MQTT connection failed: " + ex.Message);
-    }
-});
 
 app.UseHttpsRedirection();
 app.UseCors(config => config.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().SetIsOriginAllowed(x => true));
