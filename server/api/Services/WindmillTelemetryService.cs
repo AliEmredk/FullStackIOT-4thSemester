@@ -123,6 +123,102 @@ public class WindmillTelemetryService : IWindmillTelemetryService
         }
     }
 
+    public async Task<List<WindmillTelemetryDto>> GetHistoryAsync(
+        string turbineId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        int maxPoints = 2000,
+        CancellationToken ct = default)
+    {
+        turbineId = (turbineId ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(turbineId))
+            throw new ArgumentException("Missing turbineId");
+
+        if (to <= from)
+            throw new ArgumentException("Invalid time range");
+        
+        var turbine = await _db.Turbines
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.TurbineId == turbineId, ct);
+        
+        if (turbine == null)
+            return new List<WindmillTelemetryDto>();
+        
+        var rows = await _db.TelemetryReadings
+            .AsNoTracking()
+            .Where(r => r.TurbineIdFk == turbine.Id && r.Timestamp >= from && r.Timestamp <= to)
+            .OrderByDescending(r => r.Timestamp)
+            .Take(maxPoints)
+            .OrderBy(r => r.Timestamp)
+            .Select(r => new WindmillTelemetryDto
+            {
+                FarmId = turbine.FarmId,
+                TurbineId = turbine.TurbineId,
+                TurbineName = turbine.TurbineName,
+                Timestamp = r.Timestamp,
+
+                WindSpeed = r.WindSpeed,
+                WindDirection = r.WindDirection,
+                AmbientTemperature = r.AmbientTemperature,
+                RotorSpeed = r.RotorSpeed,
+                PowerOutput = r.PowerOutput,
+                NacelleDirection = r.NacelleDirection,
+                BladePitch = r.BladePitch,
+                GeneratorTemp = r.GeneratorTemp,
+                GearboxTemp = r.GearboxTemp,
+                Vibration = r.Vibration,
+
+                Status = r.Status == TurbineStatus.Running ? "running" : "stopped"
+            })
+            .ToListAsync(ct);
+        
+        return rows;
+    }
+    
+    public async Task<List<WindmillTelemetryDto>> GetLatestAsync(CancellationToken ct = default)
+    {
+        var turbines = await _db.Turbines
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        var result = new List<WindmillTelemetryDto>();
+
+        foreach (var turbine in turbines)
+        {
+            var latest = await _db.TelemetryReadings
+                .AsNoTracking()
+                .Where(r => r.TurbineIdFk == turbine.Id)
+                .OrderByDescending(r => r.Timestamp)
+                .FirstOrDefaultAsync(ct);
+
+            if (latest == null)
+                continue;
+
+            result.Add(new WindmillTelemetryDto
+            {
+                FarmId = turbine.FarmId,
+                TurbineId = turbine.TurbineId,
+                TurbineName = turbine.TurbineName,
+                Timestamp = latest.Timestamp,
+
+                WindSpeed = latest.WindSpeed,
+                WindDirection = latest.WindDirection,
+                AmbientTemperature = latest.AmbientTemperature,
+                RotorSpeed = latest.RotorSpeed,
+                PowerOutput = latest.PowerOutput,
+                NacelleDirection = latest.NacelleDirection,
+                BladePitch = latest.BladePitch,
+                GeneratorTemp = latest.GeneratorTemp,
+                GearboxTemp = latest.GearboxTemp,
+                Vibration = latest.Vibration,
+
+                Status = latest.Status == TurbineStatus.Running ? "running" : "stopped"
+            });
+        }
+
+        return result;
+    }
+
     private static TurbineStatus ParseStatus(string? status)
     {
         if (string.IsNullOrWhiteSpace(status))
