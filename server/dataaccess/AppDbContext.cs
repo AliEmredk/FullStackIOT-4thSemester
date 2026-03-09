@@ -38,6 +38,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.TurbineName).HasMaxLength(128).IsRequired();
             e.Property(x => x.FarmId).HasMaxLength(128).IsRequired();
             e.Property(x => x.CreatedAt).IsRequired();
+            
+            e.Property(x => x.CurrentStatus)
+                .HasConversion<int>()
+                .IsRequired();
+
+            e.Property(x => x.LastTelemetryAt);
 
             e.HasIndex(x => x.TurbineId).IsUnique();
             e.HasIndex(x => new { x.FarmId, x.TurbineId }).IsUnique();
