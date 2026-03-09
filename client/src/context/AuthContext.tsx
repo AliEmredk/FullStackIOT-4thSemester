@@ -16,12 +16,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
     const [user, setUser] = useState<User | null>(null);
 
     const login = async (username: string, password: string) => {
-        const res = await fetch("http://localhost:5096/api/auth/login", {
+
+        const apiUrl = import.meta.env.VITE_API_URL;
+
+        const res = await fetch(`${apiUrl}/api/auth/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({username, password})
+            body: JSON.stringify({ username, password })
         });
 
         if (!res.ok) {
@@ -30,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
 
         const data = await res.json();
         localStorage.setItem("token", data.token);
-        setUser({username});
+        setUser({ username });
     };
 
     const logout = () => {

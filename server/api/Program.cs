@@ -21,12 +21,23 @@ builder.Services.AddHostedService<MqttConnectHostedService>();
 
 builder.Services.AddMqttControllers();
 builder.Services.AddControllers();
-builder.Services.AddCors();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddScoped<IWindmillTelemetryService, WindmillTelemetryService>();
 builder.Services.AddScoped<IWindmillCommandService, WindmillCommandService>();
+
+//CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("frontend", policy =>
+    {
+        policy.WithOrigins("https://fullstackiot-web.fly.dev",
+                "http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 // NSwag
 builder.Services.AddOpenApiDocument(cfg => cfg.Title = "FullstackIot API");
@@ -110,10 +121,29 @@ if (app.Environment.IsDevelopment())
 //FOR mqtt
 var mqtt = app.Services.GetRequiredService<IMqttClientService>();
 
+var mqttHost = builder.Configuration["Mqtt:Host"] ?? "broker.hivemq.com";
+var mqttPort = int.Parse(builder.Configuration["Mqtt:Port"] ?? "1883");
+
+_ = Task.Run(async () =>
+{
+    try
+    {
+        await mqtt.ConnectAsync(mqttHost, mqttPort);
+        Console.WriteLine("✅ MQTT connected");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("❌ MQTT connection failed: " + ex.Message);
+    }
+});
+
 app.UseHttpsRedirection();
-app.UseCors(config => config.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().SetIsOriginAllowed(x => true));
+
+app.UseCors("frontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
