@@ -3,7 +3,7 @@ import {useState} from "react";
 interface Turbine {
     id: string;
     name: string;
-    status: number;
+    status: "running" | "stopped";
 }
 
 interface ControlsPanelProps {
@@ -15,13 +15,13 @@ interface ControlsPanelProps {
 const ControlsPanel = ({ turbines, selectedTurbineId, onChangeTurbine }: ControlsPanelProps) => {
     const [bladePitch, setBladePitch] = useState(15);
     const selectedTurbine = turbines.find(t => t.id === selectedTurbineId);
-    const isRunning = selectedTurbine?.status === 1;
+    const isRunning = selectedTurbine?.status === "running";
     const sendCommand = async (action: string, payload?: object) => {
         if(!selectedTurbineId) return;
-        
+
         const token = localStorage.getItem("token");
         const body = payload ? { action, ...payload } : { action };
-        
+
         await fetch(`http://localhost:5096/api/windmills/${selectedTurbineId}/command`, {
             method: "POST",
             headers: {
