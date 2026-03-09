@@ -14,6 +14,10 @@ public class Turbine
     public string FarmId { get; set; } = "";
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    
+    public TurbineStatus CurrentStatus { get; set; } = TurbineStatus.Running;
+
+    public DateTimeOffset? LastTelemetryAt { get; set; }
 
     public List<TelemetryReading> Telemetry { get; set; } = new();
     public List<AlertEvent> Alerts { get; set; } = new();
