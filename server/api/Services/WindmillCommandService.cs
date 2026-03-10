@@ -51,6 +51,8 @@ public class WindmillCommandService(
                 TurbineId = turbineId,
                 TurbineName = meta.Name,
                 FarmId = FarmId,
+                CreatedAt = DateTimeOffset.UtcNow,
+                CurrentStatus = TurbineStatus.Running
             };
             db.Turbines.Add(turbine);
             await db.SaveChangesAsync();
@@ -85,6 +87,12 @@ public class WindmillCommandService(
 
             cmd.Published = true;
             cmd.PublishedAt = DateTimeOffset.UtcNow;
+            
+            if (actionEnum == TurbineCommandAction.Stop)
+                turbine.CurrentStatus = TurbineStatus.Stopped;
+            else if (actionEnum == TurbineCommandAction.Start)
+                turbine.CurrentStatus = TurbineStatus.Running;
+
             await db.SaveChangesAsync();
         }
         catch
