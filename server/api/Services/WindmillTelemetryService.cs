@@ -41,6 +41,10 @@ public class WindmillTelemetryService : IWindmillTelemetryService
         };
 
         _db.TelemetryReadings.Add(reading);
+        
+        turbine.CurrentStatus = reading.Status;
+        turbine.LastTelemetryAt = reading.Timestamp;
+        
         await _db.SaveChangesAsync(ct);
     }
 
@@ -100,7 +104,8 @@ public class WindmillTelemetryService : IWindmillTelemetryService
             FarmId = farmId,
             TurbineId = turbineId,
             TurbineName = string.IsNullOrWhiteSpace(turbineName) ? turbineId : turbineName,
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CurrentStatus = TurbineStatus.Running
         };
 
         _db.Turbines.Add(turbine);
@@ -199,7 +204,7 @@ public class WindmillTelemetryService : IWindmillTelemetryService
                 FarmId = turbine.FarmId,
                 TurbineId = turbine.TurbineId,
                 TurbineName = turbine.TurbineName,
-                Timestamp = latest.Timestamp,
+                Timestamp = turbine.LastTelemetryAt,
 
                 WindSpeed = latest.WindSpeed,
                 WindDirection = latest.WindDirection,
@@ -212,7 +217,7 @@ public class WindmillTelemetryService : IWindmillTelemetryService
                 GearboxTemp = latest.GearboxTemp,
                 Vibration = latest.Vibration,
 
-                Status = latest.Status == TurbineStatus.Running ? "running" : "stopped"
+                Status = turbine.CurrentStatus == TurbineStatus.Running ? "running" : "stopped"
             });
         }
 
