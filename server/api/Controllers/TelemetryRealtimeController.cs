@@ -71,7 +71,7 @@ public class TelemetryRealtimeController(
                         GearboxTemp = r.GearboxTemp,
                         Vibration = r.Vibration,
 
-                        Status = r.Status == TurbineStatus.Running ? "running" : "stopped"
+                        Status = turbine.CurrentStatus == TurbineStatus.Running ? "running" : "stopped"
                     })
                     .ToListAsync();
             });
@@ -109,7 +109,7 @@ public class TelemetryRealtimeController(
                 GearboxTemp = r.GearboxTemp,
                 Vibration = r.Vibration,
 
-                Status = r.Status == TurbineStatus.Running ? "running" : "stopped"
+                Status = initialTurbine.CurrentStatus == TurbineStatus.Running ? "running" : "stopped"
             })
             .ToListAsync();
 

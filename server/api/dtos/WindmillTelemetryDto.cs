@@ -19,5 +19,5 @@ public class WindmillTelemetryDto
     public double GearboxTemp { get; set; }
     public double Vibration { get; set; }
     
-    public string Status { get; set; } = "Running";
+    public string? Status { get; set; }
 }
