@@ -124,12 +124,14 @@ public class WindmillCommandService(
 
     private static string NormalizeStop(JsonElement json)
     {
-        string? reason = null;
         if (json.TryGetProperty("reason", out var reasonProp) && reasonProp.ValueKind == JsonValueKind.String)
-            reason = reasonProp.GetString();
+        {
+            var clean = new { action = "stop", reason = reasonProp.GetString() };
+            return JsonSerializer.Serialize(clean);
+        }
 
-        var clean = new { action = "stop", reason };
-        return JsonSerializer.Serialize(clean);
+        var simple = new { action = "stop" };
+        return JsonSerializer.Serialize(simple);
     }
 
     private static string NormalizeStart()

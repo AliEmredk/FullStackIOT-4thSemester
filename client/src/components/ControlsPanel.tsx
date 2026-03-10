@@ -1,23 +1,76 @@
-import { useState } from "react";
+import {useState} from "react";
 
-const ControlsPanel = () => {
+interface Turbine {
+    id: string;
+    name: string;
+    status: "running" | "stopped";
+}
+
+interface ControlsPanelProps {
+    turbines: Turbine[];
+    selectedTurbineId?: string;
+    onChangeTurbine: (id: string) => void;
+}
+
+const ControlsPanel = ({ turbines, selectedTurbineId, onChangeTurbine }: ControlsPanelProps) => {
     const [bladePitch, setBladePitch] = useState(15);
+    const selectedTurbine = turbines.find(t => t.id === selectedTurbineId);
+    const isRunning = selectedTurbine?.status === "running";
+    const sendCommand = async (action: string, payload?: object) => {
+        if(!selectedTurbineId) return;
+
+        const token = localStorage.getItem("token");
+        const body = payload ? { action, ...payload } : { action };
+
+        await fetch(`http://localhost:5096/api/windmills/${selectedTurbineId}/command`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(body),
+        });
+    };
 
     return (
         <div className="bg-slate-800 border border-slate-800 rounded-xl p-4">
             <h2 className="text-sm mb-4 text-slate-400 uppercase">
                 Turbine Controls
             </h2>
+            <select 
+            value={selectedTurbineId}
+            onChange={(e) => onChangeTurbine(e.target.value)}
+            className="w-full mb-4 bg-slate-700 p-2 rounded"
+            >
+                {turbines.map((t) => (
+                    <option key={t.id} value={t.id}>
+                        {t.name}
+                    </option>
+                ))}
+            </select>
 
-            <button className="w-full mb-3 bg-green-600 hover:bg-green-500 py-2 rounded-lg">
+            <button disabled={isRunning} 
+                    className={`w-full mb-3 py-2 rounded-lg
+                    ${isRunning
+                    ? "bg-slate-600 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-500"}
+                    `}
+                    onClick={() => sendCommand("start")}>
                 Start Turbine
             </button>
 
-            <button className="w-full mb-3 bg-yellow-600 hover:bg-yellow-500 py-2 rounded-lg">
+            <button disabled={!isRunning}
+                className={`w-full mb-3 py-2 rounded-lg
+                ${!isRunning
+                ? "bg-slate-600 cursor-not-allowed"
+                : "bg-yellow-600 hover:bg-yellow-500"}
+                `}
+                    onClick={() => sendCommand("stop")}>
                 Stop Turbine
             </button>
 
-            <button className="w-full bg-red-600 hover:bg-red-500 py-2 rounded-lg">
+            <button className="w-full bg-red-600 hover:bg-red-500 py-2 rounded-lg"
+                    onClick={() => sendCommand("stop", { reason: "Emergency" })}>
                 Emergency Stop
             </button>
 
@@ -34,7 +87,8 @@ const ControlsPanel = () => {
                         max="30"
                         value={bladePitch}
                         onChange={(e) => setBladePitch(Number(e.target.value))}
-                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        onMouseUp={() => sendCommand("setPitch", { angle: bladePitch })}
+                        className="slider w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
                     />
                 </div>
             </div>
