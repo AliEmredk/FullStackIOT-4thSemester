@@ -42,27 +42,36 @@ const Dashboard = () => {
         };
 
         eventSource.onmessage = async (event) => {
+            console.log("SSE RAW:", event.data);
             const msg = JSON.parse(event.data);
+            console.log("SSE PARSED:", msg);
 
             // First message contains connectionId
             if (msg.connectionId) {
                 const connectionId = msg.connectionId;
 
-                await fetch(
-                    `http://localhost:5096/api/realtime/telemetry?connectionId=${connectionId}&turbineId=${selectedTurbineId}`
-                );
+                for (const turbine of turbineList) {
+                    await fetch(
+                        `http://localhost:5096/api/realtime/telemetry?connectionId=${connectionId}&turbineId=${turbine.id}`
+                    );
+                }
             }
 
             // Actual telemetry updates
             if (msg.data) {
-                const telemetry = msg.data;
+                const telemetryList = msg.data;
 
                 setTurbineList(prev =>
-                    prev.map(t =>
-                        t.id === telemetry.turbineId
-                            ? { ...t, status: telemetry.status }
-                            : t
-                    )
+                    prev.map(t => {
+                        const update = telemetryList.find((x: any) => x.turbineId === t.id);
+
+                        if (!update) return t;
+
+                        return {
+                            ...t,
+                            status: update.status
+                        };
+                    })
                 );
             }
         };
@@ -104,6 +113,7 @@ const Dashboard = () => {
                 <div className="col-span-3 space-y-6">
                     <ControlsPanel 
                     turbines={turbineList}
+                    setTurbines={setTurbineList}
                     selectedTurbineId={selectedTurbineId}
                     onChangeTurbine={setSelectedTurbineId}/>
                     <AlertsPanel selectedTurbineId={selectedTurbineId}/>

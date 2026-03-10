@@ -8,11 +8,12 @@ interface Turbine {
 
 interface ControlsPanelProps {
     turbines: Turbine[];
+    setTurbines: React.Dispatch<React.SetStateAction<Turbine[]>>;
     selectedTurbineId?: string;
     onChangeTurbine: (id: string) => void;
 }
 
-const ControlsPanel = ({ turbines, selectedTurbineId, onChangeTurbine }: ControlsPanelProps) => {
+const ControlsPanel = ({ turbines, setTurbines, selectedTurbineId, onChangeTurbine }: ControlsPanelProps) => {
     const [bladePitch, setBladePitch] = useState(15);
     const selectedTurbine = turbines.find(t => t.id === selectedTurbineId);
     const isRunning = selectedTurbine?.status === "running";
@@ -30,6 +31,16 @@ const ControlsPanel = ({ turbines, selectedTurbineId, onChangeTurbine }: Control
             },
             body: JSON.stringify(body),
         });
+        
+        if (action === "stop" || action === "start") {
+            setTurbines(prev =>
+                prev.map(t =>
+                    t.id === selectedTurbineId
+                        ? { ...t, status: action === "stop" ? "stopped" : "running" }
+                        : t
+                )
+            );
+        }
     };
 
     return (
