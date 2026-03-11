@@ -21,10 +21,13 @@ public class WindmillTelemetryService : IWindmillTelemetryService
     {
         var turbine = await GetOrCreateTurbineAsync(dto.FarmId, dto.TurbineId, dto.TurbineName, ct);
 
+        var parsedStatus = ParseStatusOrNull(dto.Status);
+        var timestamp = dto.Timestamp ?? DateTimeOffset.UtcNow;
+
         var reading = new TelemetryReading
         {
             TurbineIdFk = turbine.Id,
-            Timestamp = dto.Timestamp ?? DateTimeOffset.UtcNow,
+            Timestamp = timestamp,
 
             WindSpeed = dto.WindSpeed,
             WindDirection = dto.WindDirection,
@@ -37,10 +40,18 @@ public class WindmillTelemetryService : IWindmillTelemetryService
             GearboxTemp = dto.GearboxTemp,
             Vibration = dto.Vibration,
 
-            Status = ParseStatus(dto.Status)
+            // if telemetry does not send status, keep the turbine's current status
+            Status = parsedStatus ?? turbine.CurrentStatus
         };
 
         _db.TelemetryReadings.Add(reading);
+
+        // only overwrite current status if telemetry explicitly sent one
+        if (parsedStatus.HasValue)
+            turbine.CurrentStatus = parsedStatus.Value;
+
+        turbine.LastTelemetryAt = timestamp;
+
         await _db.SaveChangesAsync(ct);
     }
 
@@ -100,7 +111,8 @@ public class WindmillTelemetryService : IWindmillTelemetryService
             FarmId = farmId,
             TurbineId = turbineId,
             TurbineName = string.IsNullOrWhiteSpace(turbineName) ? turbineId : turbineName,
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            CurrentStatus = TurbineStatus.Running
         };
 
         _db.Turbines.Add(turbine);
@@ -199,7 +211,7 @@ public class WindmillTelemetryService : IWindmillTelemetryService
                 FarmId = turbine.FarmId,
                 TurbineId = turbine.TurbineId,
                 TurbineName = turbine.TurbineName,
-                Timestamp = latest.Timestamp,
+                Timestamp = turbine.LastTelemetryAt,
 
                 WindSpeed = latest.WindSpeed,
                 WindDirection = latest.WindDirection,
@@ -212,17 +224,17 @@ public class WindmillTelemetryService : IWindmillTelemetryService
                 GearboxTemp = latest.GearboxTemp,
                 Vibration = latest.Vibration,
 
-                Status = latest.Status == TurbineStatus.Running ? "running" : "stopped"
+                Status = turbine.CurrentStatus == TurbineStatus.Running ? "running" : "stopped"
             });
         }
 
         return result;
     }
 
-    private static TurbineStatus ParseStatus(string? status)
+    private static TurbineStatus? ParseStatusOrNull(string? status)
     {
         if (string.IsNullOrWhiteSpace(status))
-            return TurbineStatus.Running;
+            return null;
 
         return status.Trim().ToLowerInvariant() switch
         {
@@ -230,7 +242,7 @@ public class WindmillTelemetryService : IWindmillTelemetryService
             "stopped" => TurbineStatus.Stopped,
             "stop" => TurbineStatus.Stopped,
             "start" => TurbineStatus.Running,
-            _ => TurbineStatus.Running
+            _ => null
         };
     }
 

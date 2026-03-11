@@ -11,6 +11,7 @@ using Mqtt.Controllers;
 using StackExchange.Redis;
 using StateleSSE.AspNetCore;
 using StateleSSE.AspNetCore.Extensions;
+using NSwag.Generation.Processors.Security;
 
 DotNetEnv.Env.Load(); 
 
@@ -41,7 +42,21 @@ builder.Services.AddCors(options =>
 });
 
 // NSwag
-builder.Services.AddOpenApiDocument(cfg => cfg.Title = "FullstackIot API");
+builder.Services.AddOpenApiDocument(cfg =>
+{
+    cfg.Title = "FullstackIot API";
+
+    cfg.AddSecurity("JWT", Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme
+    {
+        Type = NSwag.OpenApiSecuritySchemeType.ApiKey,
+        Name = "Authorization",
+        In = NSwag.OpenApiSecurityApiKeyLocation.Header,
+        Description = "Type into the textbox: Bearer {your JWT token}"
+    });
+
+    cfg.OperationProcessors.Add(
+        new NSwag.Generation.Processors.Security.AspNetCoreOperationSecurityScopeProcessor("JWT"));
+});
 
 // ---- Redis (StateleSSE backplane)
 var redisConn =
