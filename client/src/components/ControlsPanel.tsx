@@ -1,13 +1,21 @@
 import { useState } from "react";
 
-const ControlsPanel = () => {
+type ControlsPanelProps = {
+    selectedTurbineId: string;
+};
+
+const ControlsPanel = ({ selectedTurbineId }: ControlsPanelProps) => {
     const [bladePitch, setBladePitch] = useState(15);
 
     return (
         <div className="bg-slate-800 border border-slate-800 rounded-xl p-4">
-            <h2 className="text-sm mb-4 text-slate-400 uppercase">
+            <h2 className="text-sm mb-2 text-slate-400 uppercase">
                 Turbine Controls
             </h2>
+
+            <p className="text-xs text-slate-500 mb-4">
+                Selected turbine: {selectedTurbineId}
+            </p>
 
             <button className="w-full mb-3 bg-green-600 hover:bg-green-500 py-2 rounded-lg">
                 Start Turbine
@@ -20,7 +28,6 @@ const ControlsPanel = () => {
             <button className="w-full bg-red-600 hover:bg-red-500 py-2 rounded-lg">
                 Emergency Stop
             </button>
-
 
             <div className="space-y-4 py-4">
                 <div>
