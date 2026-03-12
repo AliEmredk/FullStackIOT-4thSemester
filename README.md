@@ -14,6 +14,13 @@ https://fullstackiot-server.fly.dev/
 
 Simulator used in the project: https://sea-fullstack.web.app/
 
+Users to Log in:
+- Username: Admin
+- Password: hello123
+
+- Username: Laura
+- Password: hello123
+
 ---
 
 ## What the System Does
