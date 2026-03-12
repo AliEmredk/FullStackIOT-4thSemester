@@ -11,20 +11,41 @@ interface Alert {
 }
 
 const AlertsPanel = ({ selectedTurbineId }: Props) => {
+    const apiUrl = import.meta.env.VITE_API_URL;
     const [alerts, setAlerts] = useState<Alert[]>([]);
 
     useEffect(() => {
-        const loadAlerts = async () => {
-            const res = await fetch(
-                `http://localhost:5096/api/alerts?turbineId=${selectedTurbineId}`
-            );
+        if (!apiUrl || !selectedTurbineId) return;
 
-            const data = await res.json();
-            setAlerts(data);
+        const controller = new AbortController();
+
+        const loadAlerts = async () => {
+            try {
+                const res = await fetch(
+                    `${apiUrl}/api/alerts?turbineId=${encodeURIComponent(selectedTurbineId)}`,
+                    { signal: controller.signal }
+                );
+
+                if (!res.ok) {
+                    console.error("Failed to load alerts:", res.status);
+                    setAlerts([]);
+                    return;
+                }
+
+                const data = await res.json();
+                setAlerts(data);
+            } catch (err) {
+                if ((err as Error).name !== "AbortError") {
+                    console.error("Alerts fetch error:", err);
+                    setAlerts([]);
+                }
+            }
         };
 
         loadAlerts();
-    }, [selectedTurbineId]);
+
+        return () => controller.abort();
+    }, [apiUrl, selectedTurbineId]);
 
     const getSeverityStyles = (severity: string) => {
         if (severity.toLowerCase() === "critical") {
@@ -36,7 +57,7 @@ const AlertsPanel = ({ selectedTurbineId }: Props) => {
         }
 
         return "border-slate-500 bg-slate-500/10";
-    };  
+    };
 
     return (
         <div className="bg-slate-800 border border-slate-800 rounded-xl p-4">
