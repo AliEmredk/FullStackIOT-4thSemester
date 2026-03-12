@@ -14,9 +14,15 @@ type ChartsPanelProps = {
     selectedTurbineId: string;
 };
 
+type ChartMetricKey =
+    | "powerOutput"
+    | "windSpeed"
+    | "ambientTemperature"
+    | "vibration";
+
 const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
     const minutesBack = 60;
-    const { series, latest, debug } = useSseTelemetry(selectedTurbineId, minutesBack, 1000);
+    const { series, latest} = useSseTelemetry(selectedTurbineId, minutesBack, 1000);
 
     const chartData = useMemo(() => {
         return series.map((p) => ({
@@ -35,7 +41,7 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
                            unit,
                        }: {
         title: string;
-        dataKey: keyof typeof chartData[number];
+        dataKey: ChartMetricKey;
         unit?: string;
     }) => (
         <div className="bg-slate-700 p-4 rounded-lg h-72 min-w-0 overflow-hidden">
@@ -44,14 +50,24 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
                 <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <LineChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="t" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-                        <YAxis tick={{ fontSize: 10 }} />
-                        <Tooltip />
+                        <XAxis dataKey="t" tick={{ fontSize: 10 }} stroke="white" interval="preserveStartEnd" />
+                        <YAxis tick={{ fontSize: 10 }} stroke="white" />
+                        <Tooltip
+                            labelFormatter={(label) => `Time: ${label}`}
+                            contentStyle={{
+                                backgroundColor: "#334155",
+                                border: "none",
+                                borderRadius: "8px"
+                            }}
+                            labelStyle={{ color: "#e2e8f0" }}
+                            itemStyle={{ color: "#22c55e" }}
+                        />
                         <Line
                             type="monotone"
                             stroke="#22c55e"
                             strokeWidth={2}
-                            dataKey={dataKey as string}
+                            dataKey={dataKey}
+                            name={title}
                             dot={false}
                             isAnimationActive={false}
                         />
@@ -60,7 +76,7 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
             </div>
             {unit && latest ? (
                 <div className="text-xs text-slate-300 mt-2">
-                    current: {(latest[dataKey as keyof typeof latest] as number).toFixed(2)} {unit}
+                    current: {latest[dataKey].toFixed(2)} {unit}
                 </div>
             ) : null}
         </div>
@@ -70,19 +86,11 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
         <div className="bg-slate-800 border border-slate-800 rounded-xl p-6">
             <h2 className="text-sm mb-4 text-slate-400 uppercase">Telemetry</h2>
 
-            <div className="text-xs text-slate-400 mb-4">
-                turbine={selectedTurbineId} | points={series.length} | window={minutesBack}m
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <ChartCard title="Power Output" dataKey="powerOutput" unit="kW" />
                 <ChartCard title="Wind Speed" dataKey="windSpeed" unit="m/s" />
                 <ChartCard title="Ambient Temperature" dataKey="ambientTemperature" unit="°C" />
                 <ChartCard title="Vibration" dataKey="vibration" />
-            </div>
-
-            <div className="bg-slate-700 p-4 rounded-lg mt-6">
-                <div className="text-xs text-slate-200">DEBUG: {debug}</div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
