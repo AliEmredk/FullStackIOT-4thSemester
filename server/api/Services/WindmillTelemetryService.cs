@@ -9,11 +9,13 @@ public class WindmillTelemetryService : IWindmillTelemetryService
 {
     private readonly AppDbContext _db;
     public readonly ILogger<WindmillTelemetryService> _logger;
+    private readonly ITelemetryRealtimeService _realtime;
 
-    public WindmillTelemetryService(AppDbContext db, ILogger<WindmillTelemetryService> logger)
+    public WindmillTelemetryService(AppDbContext db, ILogger<WindmillTelemetryService> logger, ITelemetryRealtimeService realtime)
     {
         _db = db;
         _logger = logger;
+        _realtime = _realtime;
     }
     
     // Check out what is this cancellationtoken for
@@ -65,6 +67,17 @@ public class WindmillTelemetryService : IWindmillTelemetryService
             _logger.LogWarning("Skipping alert with empty message for turbineId={TurbineId}", dto.TurbineId);
             return;
         }
+        
+        var timestamp = dto.Timestamp ?? DateTimeOffset.UtcNow;
+
+        var exists = await _db.AlertEvents.AnyAsync(a =>
+                a.TurbineIdFk == turbine.Id &&
+                a.Timestamp == timestamp &&
+                a.Message == dto.Message,
+            ct);
+
+        if (exists)
+            return;
 
         var alert = new AlertEvent
         {
