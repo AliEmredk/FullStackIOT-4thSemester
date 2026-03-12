@@ -11,6 +11,8 @@ interface Turbine {
     status: "running" | "stopped";
 }
 
+const apiUrl = import.meta.env.VITE_API_URL;
+
 const Dashboard = () => {
     const { logout, user } = useAuth();
     
@@ -19,7 +21,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         const loadTurbines = async () => {
-            const res = await fetch("http://localhost:5096/api/telemetry/latest");
+            const res = await fetch(`${apiUrl}/api/telemetry/latest`);
             const data = await res.json();
 
             const turbines = data.map((t: any) => ({
@@ -32,52 +34,7 @@ const Dashboard = () => {
         };
 
         loadTurbines();
-    }, []);
-
-    useEffect(() => {
-        const eventSource = new EventSource("http://localhost:5096/api/realtime/sse");
-
-        eventSource.onopen = () => {
-            console.log("SSE connected");
-        };
-
-        eventSource.onmessage = async (event) => {
-            console.log("SSE RAW:", event.data);
-            const msg = JSON.parse(event.data);
-            console.log("SSE PARSED:", msg);
-
-            // First message contains connectionId
-            if (msg.connectionId) {
-                const connectionId = msg.connectionId;
-
-                for (const turbine of turbineList) {
-                    await fetch(
-                        `http://localhost:5096/api/realtime/telemetry?connectionId=${connectionId}&turbineId=${turbine.id}`
-                    );
-                }
-            }
-
-            // Actual telemetry updates
-            if (msg.data) {
-                const telemetryList = msg.data;
-
-                setTurbineList(prev =>
-                    prev.map(t => {
-                        const update = telemetryList.find((x: any) => x.turbineId === t.id);
-
-                        if (!update) return t;
-
-                        return {
-                            ...t,
-                            status: update.status
-                        };
-                    })
-                );
-            }
-        };
-
-        return () => eventSource.close();
-    }, [selectedTurbineId]);
+    }, [apiUrl]);
 
     return (
         <div className="min-h-screen bg-slate-900 text-slate-200">
