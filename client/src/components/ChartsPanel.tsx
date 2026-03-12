@@ -40,7 +40,6 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
         const minutesBack = 60;
 
         const [series, setSeries] = useState<Telemetry[]>([]);
-        const [debug, setDebug] = useState("not started");
 
     useEffect(() => {
         let cancelled = false;
@@ -53,12 +52,7 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
 
                 eventSource.onopen = () => {
                     console.log("SSE OPEN");
-                    setDebug("SSE open");
                 };
-
-                eventSource.addEventListener("message", (event) => {
-                    console.log("DEFAULT MESSAGE EVENT", event.data);
-                });
 
                 const onConnected = async (event: MessageEvent) => {
                     if (cancelled) return;
@@ -69,8 +63,6 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
                     console.log("CONNECTED EVENT", connectedPayload);
                     console.log("PARSED CONNECTION ID", connectionId);
 
-                    setDebug(`connected | connectionId=${connectionId}`);
-
                     const url =
                         `/api/realtime/telemetry?connectionId=${encodeURIComponent(connectionId)}` +
                         `&turbineId=${encodeURIComponent(selectedTurbineId)}` +
@@ -79,7 +71,6 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
 
                     const r = await fetch(url);
                     if (!r.ok) {
-                        setDebug(`subscribe failed: status ${r.status}`);
                         return;
                     }
 
@@ -93,8 +84,6 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
                                 new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
                         )
                     );
-
-                    setDebug(`subscribed to ${response.group} | points=${response.data.length}`);
 
                     const onGroupData = (pushEvent: MessageEvent) => {
                         console.log("GROUP EVENT RECEIVED", response.group, pushEvent.data);
@@ -110,7 +99,6 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
                             );
 
                         setSeries(normalized);
-                        setDebug(`push update | points=${normalized.length} | ${new Date().toLocaleTimeString()}`);
                     };
 
                     eventSource?.addEventListener(response.group, onGroupData);
@@ -125,10 +113,9 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
 
                 eventSource.onerror = () => {
                     console.error("SSE ERROR");
-                    setDebug("SSE connection error");
                 };
             } catch (e) {
-                setDebug(`SSE ERROR: ${String(e)}`);
+                console.error("Failed to start realtime chart", e);
             }
         };
 
@@ -139,7 +126,7 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
             removeGroupListener?.();
             eventSource?.close();
         };
-    }, [selectedTurbineId, minutesBack]);
+    }, [selectedTurbineId]);
 
     const latest = useMemo(() => {
         return series.length ? series[series.length - 1] : null;
@@ -171,14 +158,24 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
                 <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <LineChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="t" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-                        <YAxis tick={{ fontSize: 10 }} />
-                        <Tooltip />
+                        <XAxis dataKey="t" tick={{ fontSize: 10 }} stroke="white" interval="preserveStartEnd" />
+                        <YAxis tick={{ fontSize: 10 }} stroke="white" />
+                        <Tooltip
+                            labelFormatter={(label) => `Time: ${label}`}
+                            contentStyle={{
+                                backgroundColor: "#334155",
+                                border: "none",
+                                borderRadius: "8px"
+                            }}
+                            labelStyle={{ color: "#e2e8f0" }}
+                            itemStyle={{ color: "#22c55e" }}
+                        />
                         <Line
                             type="monotone"
                             stroke="#22c55e"
                             strokeWidth={2}
                             dataKey={dataKey as string}
+                            name={title}
                             dot={false}
                             isAnimationActive={false}
                         />
@@ -197,19 +194,11 @@ const ChartsPanel = ({ selectedTurbineId }: ChartsPanelProps) => {
         <div className="bg-slate-800 border border-slate-800 rounded-xl p-6">
             <h2 className="text-sm mb-4 text-slate-400 uppercase">Telemetry</h2>
 
-            <div className="text-xs text-slate-400 mb-4">
-                turbine={selectedTurbineId} | points={series.length} | window={minutesBack}m
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <ChartCard title="Power Output" dataKey="powerOutput" unit="kW" />
                 <ChartCard title="Wind Speed" dataKey="windSpeed" unit="m/s" />
                 <ChartCard title="Ambient Temperature" dataKey="ambientTemperature" unit="°C" />
                 <ChartCard title="Vibration" dataKey="vibration" unit="" />
-            </div>
-
-            <div className="bg-slate-700 p-4 rounded-lg mt-6">
-                <div className="text-xs text-slate-200">DEBUG: {debug}</div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
