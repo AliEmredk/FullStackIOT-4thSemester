@@ -87,11 +87,6 @@ const ControlsPanel = ({ turbines, setTurbines, selectedTurbineId, onChangeTurbi
                 Stop Turbine
             </button>
 
-            <button className="w-full bg-red-600 hover:bg-red-500 py-2 rounded-lg"
-                    onClick={() => sendCommand("stop", { reason: "Emergency" })}>
-                Emergency Stop
-            </button>
-
 
             <div className="space-y-4 py-4">
                 <div>
