@@ -12,8 +12,7 @@ https://fullstackiot-web.fly.dev/
 Back-end link:
 https://fullstackiot-server.fly.dev/
 
-Simulator used in the project:  
-https://sea-fullstack.web.app/
+Simulator used in the project: https://sea-fullstack.web.app/
 
 ---
 
@@ -96,6 +95,6 @@ This project demonstrates how real-time IoT data from wind turbines can be colle
 
 ## Created by ELK
 
-Ali Emre Uzunoglu
-Katja Tamstrup Strunck
-Laura Shpakova
+- Ali Emre Uzunoglu
+- Katja Tamstrup Strunck
+- Laura Shpakova
