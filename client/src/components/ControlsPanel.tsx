@@ -14,16 +14,18 @@ interface ControlsPanelProps {
 }
 
 const ControlsPanel = ({ turbines, setTurbines, selectedTurbineId, onChangeTurbine }: ControlsPanelProps) => {
+    const apiUrl = import.meta.env.VITE_API_URL;
     const [bladePitch, setBladePitch] = useState(15);
     const selectedTurbine = turbines.find(t => t.id === selectedTurbineId);
     const isRunning = selectedTurbine?.status === "running";
+
     const sendCommand = async (action: string, payload?: object) => {
-        if(!selectedTurbineId) return;
+        if (!selectedTurbineId) return;
 
         const token = localStorage.getItem("token");
         const body = payload ? { action, ...payload } : { action };
 
-        await fetch(`http://localhost:5096/api/windmills/${selectedTurbineId}/command`, {
+        const res = await fetch(`${apiUrl}/api/windmills/${selectedTurbineId}/command`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -31,7 +33,12 @@ const ControlsPanel = ({ turbines, setTurbines, selectedTurbineId, onChangeTurbi
             },
             body: JSON.stringify(body),
         });
-        
+
+        if (!res.ok) {
+            console.error("Command failed");
+            return;
+        }
+
         if (action === "stop" || action === "start") {
             setTurbines(prev =>
                 prev.map(t =>
