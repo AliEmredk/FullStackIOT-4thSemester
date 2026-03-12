@@ -107,7 +107,7 @@ const Dashboard = () => {
                 </div>
 
                 <div className="col-span-6">
-                    <ChartsPanel />
+                    <ChartsPanel selectedTurbineId={selectedTurbineId} />
                 </div>
 
                 <div className="col-span-3 space-y-6">

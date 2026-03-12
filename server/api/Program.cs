@@ -27,6 +27,7 @@ builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddScoped<IWindmillTelemetryService, WindmillTelemetryService>();
 builder.Services.AddScoped<IWindmillCommandService, WindmillCommandService>();
+builder.Services.AddScoped<ITelemetryRealtimeService, TelemetryRealtimeService>();
 
 //CORS
 builder.Services.AddCors(options =>
